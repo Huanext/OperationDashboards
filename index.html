@@ -3,6 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>Operation Dashboards</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
@@ -35,9 +38,40 @@
   #frame{flex:1;width:100%;border:0;background:#fff}
   body.viewing #menu{display:none}
   body.viewing #view{display:flex}
+
+  /* หน้าล็อกรหัส (รูปแบบเดียวกับ dashboard_builder V1) */
+  #lockScreen{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:999;padding:16px;
+    background:linear-gradient(135deg,#eef4ff 0%,#f6f3ff 50%,#eefaf5 100%)}
+  #lockBox{width:100%;max-width:340px;text-align:center;background:var(--card);border:1px solid var(--border);border-radius:18px;padding:32px 26px;box-shadow:0 10px 30px rgba(40,60,110,.10)}
+  #lockBox .lockIcon{width:56px;height:56px;margin:0 auto 14px;border-radius:16px;display:grid;place-items:center;font-size:26px;background:#e7f0ff}
+  #lockBox .lockTitle{font-size:20px;font-weight:700;margin:0 0 4px}
+  #lockBox h2{font-size:14px;font-weight:400;color:var(--muted);margin:0 0 20px}
+  #lockBox input{width:100%;padding:11px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text);font:inherit;font-size:15px;text-align:center;outline:none}
+  #lockBox input:focus{border-color:#2f7df6;box-shadow:0 0 0 3px rgba(47,125,246,.15)}
+  #lockBox button{width:100%;margin-top:12px;padding:11px 12px;border-radius:10px;border:0;background:#2f7df6;color:#fff;font:inherit;font-weight:600;font-size:15px;cursor:pointer}
+  #lockBox button:hover{filter:brightness(1.08)}
+  #lockError{color:#e03131;font-size:13px;margin-top:10px;min-height:16px}
+  @media (prefers-color-scheme: dark){
+    #lockScreen{background:linear-gradient(135deg,#161b26 0%,#1a1d2b 50%,#15201d 100%)}
+    #lockBox .lockIcon{background:#22304a}
+    #lockBox{box-shadow:none}
+  }
+  body.locked #menu, body.locked #view{display:none !important}
+  body:not(.locked) #lockScreen{display:none}
 </style>
 </head>
-<body>
+<body class="locked">
+
+<div id="lockScreen">
+  <div id="lockBox">
+    <div class="lockIcon">🔒</div>
+    <div class="lockTitle">Operation Dashboards</div>
+    <h2>กรุณาใส่รหัสผ่านเพื่อเข้าดู Dashboard</h2>
+    <input type="password" id="lockInput" placeholder="รหัสผ่าน" autocomplete="off">
+    <button id="lockBtn">เข้าสู่ระบบ</button>
+    <div id="lockError"></div>
+  </div>
+</div>
 
 <div id="menu">
   <header>
@@ -85,7 +119,8 @@
     const card=cards.find(c=>c.getAttribute('href')==='#'+id);
     if(card){
       const src=card.dataset.src;
-      if(frame.src!==src) frame.src=src;
+      // ใส่เวลาต่อท้ายลิงก์ ให้ดึงข้อมูลล่าสุดทุกครั้งที่เปิด (ไม่ใช้ของเก่าที่ค้างในเครื่อง)
+      if(frame.dataset.id!==id){ frame.dataset.id=id; frame.src=src+'?t='+Date.now(); }
       document.getElementById('title').textContent=card.dataset.name;
       document.getElementById('openNew').href=src;
       view.style.setProperty('--c',card.style.getPropertyValue('--c'));
@@ -96,10 +131,33 @@
   }
   // ปุ่มกลับ: ไปหน้าหลัก (หน้าเมนู) ทันทีเสมอ ไม่ว่าจะกดอะไรใน dashboard มาก่อน
   document.getElementById('back').onclick=()=>{
-    location.href=location.pathname;
+    location.href=location.pathname+'?t='+Date.now();
   };
-  window.addEventListener('hashchange',render);
-  render();
+  window.addEventListener('hashchange',()=>{ if(!document.body.classList.contains('locked')) render(); });
+
+  // ===== ล็อกรหัส =====
+  // เก็บรหัสเป็นค่า SHA-256 (ไม่เห็นรหัสจริงในโค้ด) — ค่าปัจจุบันคือรหัส "huanext"
+  const LOCK_HASH="5954fbde6abaf78972105460abec71d254bf25c6e06e4067c843bc604ca8f1da";
+  const lockInput=document.getElementById('lockInput');
+  const lockError=document.getElementById('lockError');
+  async function sha256(t){
+    const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));
+    return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
+  }
+  function unlock(){
+    document.body.classList.remove('locked');
+    try{ sessionStorage.setItem('opDashUnlocked','1'); }catch(e){}
+    render();
+  }
+  async function tryUnlock(){
+    if(await sha256(lockInput.value)===LOCK_HASH){ unlock(); }
+    else{ lockError.textContent='รหัสผ่านไม่ถูกต้อง'; lockInput.value=''; lockInput.focus(); }
+  }
+  document.getElementById('lockBtn').addEventListener('click',tryUnlock);
+  lockInput.addEventListener('keydown',e=>{ if(e.key==='Enter') tryUnlock(); });
+
+  let ok=false; try{ ok=sessionStorage.getItem('opDashUnlocked')==='1'; }catch(e){}
+  if(ok) unlock(); else lockInput.focus();
 </script>
 </body>
 </html>
