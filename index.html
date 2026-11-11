@@ -136,8 +136,8 @@
   window.addEventListener('hashchange',()=>{ if(!document.body.classList.contains('locked')) render(); });
 
   // ===== ล็อกรหัส =====
-  // เก็บรหัสเป็นค่า SHA-256 (ไม่เห็นรหัสจริงในโค้ด) — ค่าปัจจุบันคือรหัส "huanext"
-  const LOCK_HASH="5954fbde6abaf78972105460abec71d254bf25c6e06e4067c843bc604ca8f1da";
+  // เก็บรหัสเป็นค่า SHA-256 (ไม่เห็นรหัสจริงในโค้ด)
+  const LOCK_HASH="9b2f8e772cbeea6b5bbc944a681aeb82956e9404168c22cd73585acb0520d6e3";
   const lockInput=document.getElementById('lockInput');
   const lockError=document.getElementById('lockError');
   async function sha256(t){
