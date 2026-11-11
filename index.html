@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Operation Dashboards</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#f4f6fa;--card:#fff;--text:#1d2433;--muted:#6b7385;--border:#e3e7ef;--shadow:0 2px 10px rgba(20,30,60,.06)}
+  @media (prefers-color-scheme: dark){:root{--bg:#12151c;--card:#1b2029;--text:#e8ecf3;--muted:#98a1b3;--border:#2a3140;--shadow:none}}
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{background:var(--bg);color:var(--text);font-family:'Sarabun',system-ui,sans-serif}
+
+  /* หน้าเมนู */
+  #menu header{padding:40px 16px 8px;text-align:center}
+  #menu h1{margin:0;font-size:28px}
+  #menu header p{margin:6px 0 0;color:var(--muted)}
+  .grid{max-width:960px;margin:24px auto;padding:0 16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px}
+  a.card{display:block;text-decoration:none;color:inherit;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px;box-shadow:var(--shadow);transition:transform .15s,border-color .15s;border-top:5px solid var(--c);cursor:pointer}
+  a.card:hover{transform:translateY(-3px);border-color:var(--c)}
+  .icon{width:46px;height:46px;border-radius:12px;display:grid;place-items:center;font-size:24px;background:color-mix(in srgb,var(--c) 15%,transparent)}
+  .card h2{margin:14px 0 4px;font-size:19px}
+  .card p{margin:0;color:var(--muted);font-size:14px}
+  .go{margin-top:14px;font-weight:600;color:var(--c);font-size:14px}
+  footer{text-align:center;color:var(--muted);font-size:13px;padding:24px 16px}
+
+  /* หน้า dashboard */
+  #view{display:none;flex-direction:column;height:100%}
+  #view .bar{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--card);border-bottom:3px solid var(--c,#2f7df6);flex-shrink:0}
+  #back{border:0;background:var(--c,#2f7df6);color:#fff;font:inherit;font-weight:600;padding:8px 14px;border-radius:10px;cursor:pointer;white-space:nowrap}
+  #title{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .spacer{flex:1}
+  #openNew{color:var(--muted);font-size:13px;text-decoration:none;white-space:nowrap}
+  #frame{flex:1;width:100%;border:0;background:#fff}
+  body.viewing #menu{display:none}
+  body.viewing #view{display:flex}
+</style>
+</head>
+<body>
+
+<div id="menu">
+  <header>
+    <h1>📊 Operation Dashboards</h1>
+    <p>รวมทุก Dashboard ไว้ในที่เดียว</p>
+  </header>
+  <main class="grid">
+    <a class="card" style="--c:#2f7df6" href="#stock" data-src="https://huanext.github.io/AutoStock/" data-name="📦 Auto Stock">
+      <div class="icon">📦</div><h2>Auto Stock</h2><p>Stock Balance &amp; Stock Cover Week</p><div class="go">เปิด Dashboard →</div>
+    </a>
+    <a class="card" style="--c:#e8590c" href="#recall" data-src="https://huanext.github.io/AutoRecall/" data-name="↩️ Auto Recall">
+      <div class="icon">↩️</div><h2>Auto Recall</h2><p>ติดตาม Recall &amp; Non Conform Pending</p><div class="go">เปิด Dashboard →</div>
+    </a>
+    <a class="card" style="--c:#2b9a66" href="#checklist" data-src="https://huanext.github.io/AutoChecklist/" data-name="✅ Auto Checklist">
+      <div class="icon">✅</div><h2>Auto Checklist</h2><p>Retail Checklist Report</p><div class="go">เปิด Dashboard →</div>
+    </a>
+    <a class="card" style="--c:#8b5cf6" href="#compare" data-src="https://huanext.github.io/Compare/" data-name="⚖️ Compare">
+      <div class="icon">⚖️</div><h2>Compare</h2><p>เปรียบเทียบข้อมูล</p><div class="go">เปิด Dashboard →</div>
+    </a>
+    <a class="card" style="--c:#0c9aa8" href="#upc" data-src="https://huanext.github.io/All_Dashboard_UPC_I/" data-name="🗂️ All Dashboard UPC I">
+      <div class="icon">🗂️</div><h2>All Dashboard UPC I</h2><p>รวม Dashboard UPC I</p><div class="go">เปิด Dashboard →</div>
+    </a>
+  </main>
+  <footer>Wire &amp; Wireless Co.,Ltd</footer>
+</div>
+
+<div id="view">
+  <div class="bar">
+    <button id="back">← กลับหน้าเมนู</button>
+    <span id="title"></span>
+    <span class="spacer"></span>
+    <a id="openNew" href="#" target="_blank">เปิดในแท็บใหม่ ↗</a>
+  </div>
+  <iframe id="frame" title="Dashboard"></iframe>
+</div>
+
+<script>
+  const cards=[...document.querySelectorAll('a.card')];
+  const frame=document.getElementById('frame');
+  const view=document.getElementById('view');
+
+  // แสดงหน้าตาม # ใน URL — ทำให้ปุ่มย้อนกลับของเบราว์เซอร์/มือถือใช้ได้
+  function render(){
+    const id=location.hash.slice(1);
+    const card=cards.find(c=>c.getAttribute('href')==='#'+id);
+    if(card){
+      const src=card.dataset.src;
+      if(frame.src!==src) frame.src=src;
+      document.getElementById('title').textContent=card.dataset.name;
+      document.getElementById('openNew').href=src;
+      view.style.setProperty('--c',card.style.getPropertyValue('--c'));
+      document.body.classList.add('viewing');
+    }else{
+      document.body.classList.remove('viewing');
+    }
+  }
+  // ปุ่มกลับ: ไปหน้าหลัก (หน้าเมนู) ทันทีเสมอ ไม่ว่าจะกดอะไรใน dashboard มาก่อน
+  document.getElementById('back').onclick=()=>{
+    location.href=location.pathname;
+  };
+  window.addEventListener('hashchange',render);
+  render();
+</script>
+</body>
+</html>
