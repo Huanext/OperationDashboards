@@ -136,28 +136,44 @@
   window.addEventListener('hashchange',()=>{ if(!document.body.classList.contains('locked')) render(); });
 
   // ===== ล็อกรหัส =====
-  // เก็บรหัสเป็นค่า SHA-256 (ไม่เห็นรหัสจริงในโค้ด)
-  const LOCK_HASH="9b2f8e772cbeea6b5bbc944a681aeb82956e9404168c22cd73585acb0520d6e3";
+  // รหัสเก็บเป็นค่า SHA-256 ในไฟล์ lock.json (เปลี่ยนด้วยเครื่องมือ "เปลี่ยนรหัส" ในเครื่อง)
   const lockInput=document.getElementById('lockInput');
   const lockError=document.getElementById('lockError');
   async function sha256(t){
     const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));
     return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
   }
-  function unlock(){
+  async function getLockHash(){
+    const r=await fetch('lock.json?t='+Date.now(),{cache:'no-store'});
+    if(!r.ok) throw new Error('lock');
+    return (await r.json()).hash;
+  }
+  function unlock(hash){
     document.body.classList.remove('locked');
-    try{ sessionStorage.setItem('opDashUnlocked','1'); }catch(e){}
+    try{ sessionStorage.setItem('opDashUnlocked',hash); }catch(e){}
     render();
   }
   async function tryUnlock(){
-    if(await sha256(lockInput.value)===LOCK_HASH){ unlock(); }
-    else{ lockError.textContent='รหัสผ่านไม่ถูกต้อง'; lockInput.value=''; lockInput.focus(); }
+    lockError.textContent='';
+    try{
+      const hash=await getLockHash();
+      if(await sha256(lockInput.value)===hash){ unlock(hash); return; }
+      lockError.textContent='รหัสผ่านไม่ถูกต้อง';
+    }catch(e){ lockError.textContent='เชื่อมต่อไม่ได้ ลองใหม่อีกครั้ง'; }
+    lockInput.value=''; lockInput.focus();
   }
   document.getElementById('lockBtn').addEventListener('click',tryUnlock);
   lockInput.addEventListener('keydown',e=>{ if(e.key==='Enter') tryUnlock(); });
 
-  let ok=false; try{ ok=sessionStorage.getItem('opDashUnlocked')==='1'; }catch(e){}
-  if(ok) unlock(); else lockInput.focus();
+  // เข้าแล้วในแท็บนี้: เช็กว่ารหัสยังเป็นตัวเดิม ถ้ามีการเปลี่ยนรหัส ต้องใส่ใหม่
+  (async()=>{
+    let saved=null; try{ saved=sessionStorage.getItem('opDashUnlocked'); }catch(e){}
+    if(saved){
+      try{ if(await getLockHash()===saved){ unlock(saved); return; } }catch(e){}
+      try{ sessionStorage.removeItem('opDashUnlocked'); }catch(e){}
+    }
+    lockInput.focus();
+  })();
 </script>
 </body>
 </html>
