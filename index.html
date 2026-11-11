@@ -26,6 +26,9 @@
   .card h2{margin:14px 0 4px;font-size:19px}
   .card p{margin:0;color:var(--muted);font-size:14px}
   .go{margin-top:14px;font-weight:600;color:var(--c);font-size:14px}
+  .group{max-width:928px;margin:8px auto 0;padding:24px 0 0;border-top:1px solid var(--border)}
+  .group .grid{padding:0;margin-top:0;grid-template-columns:repeat(auto-fill,minmax(210px,1fr))}
+  .groupTitle{margin:24px 0 0;font-size:18px;padding-top:20px;border-top:1px solid var(--border)}
   footer{text-align:center;color:var(--muted);font-size:13px;padding:24px 16px}
 
   /* หน้า dashboard */
@@ -106,6 +109,16 @@
       <div class="icon">✳️</div><h2>All insurance</h2><p>Dashboard บน claude.ai</p><div class="go">เปิด Dashboard →</div>
     </a>
   </main>
+  <section class="group">
+    <main class="grid">
+      <a class="card" style="--c:#1971c2" href="#edc" data-src="https://mdrinterest.github.io/MDRINTEREST-WW_Code_EDC_Installment-/" data-name="💳 Code EDC ผ่อนชำระ">
+      <div class="icon">💳</div><h2>Code EDC ผ่อนชำระ</h2><p>รหัส EDC สำหรับผ่อนชำระ</p><div class="go">เปิด Dashboard →</div>
+      </a>
+      <a class="card" style="--c:#06c755" href="#customerhub" data-src="https://reporting-ww.github.io/LINE_OA/" data-name="💬 Customer HUB">
+      <div class="icon">💬</div><h2>Customer HUB</h2><p>LINE OA</p><div class="go">เปิด Dashboard →</div>
+      </a>
+    </main>
+  </section>
   <footer>Wire &amp; Wireless Co.,Ltd</footer>
 </div>
 
